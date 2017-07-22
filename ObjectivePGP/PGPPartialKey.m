@@ -398,6 +398,26 @@ NS_ASSUME_NONNULL_BEGIN
     return foundUser;
 }
 
+- (BOOL)validatePassphrase:(NSString *)passphrase error:(NSError *__autoreleasing *)error {
+    PGPSecretKeyPacket *secretPacket = nil;
+    if ([self.primaryKeyPacket isKindOfClass:[PGPSecretKeyPacket class]]) {
+        secretPacket = [(PGPSecretKeyPacket *)self.primaryKeyPacket decryptedKeyPacket:passphrase error:error];
+        if (*error) {
+            return NO;
+        }
+    }
+    
+    for (PGPSubKey *subKey in self.subKeys) {
+        if ([subKey.primaryKeyPacket isKindOfClass:[PGPSecretKeyPacket class]]) {
+            secretPacket = [(PGPSecretKeyPacket *)subKey.primaryKeyPacket decryptedKeyPacket:passphrase error:error];
+            if (*error) {
+                return NO;
+            }
+        }
+    }
+    return YES;
+}
+
 #pragma mark - Preferences
 
 - (PGPSymmetricAlgorithm)preferredSymmetricAlgorithm {
