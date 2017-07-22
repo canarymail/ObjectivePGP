@@ -31,6 +31,7 @@ typedef NS_ENUM(NSUInteger, PGPPartialKeyType) { PGPPartialKeyUnknown = 0, PGPPa
 @property (nonatomic, nullable) PGPPacket *revocationSignature;
 
 @property (nonatomic, readonly) PGPKeyID *keyID;
+@property (nonatomic, readonly) NSDate *expirationDate;
 
 - (instancetype)initWithPackets:(NSArray<PGPPacket *> *)packets;
 

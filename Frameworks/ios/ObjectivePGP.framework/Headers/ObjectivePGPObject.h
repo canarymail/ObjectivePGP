@@ -18,10 +18,18 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic, readonly) NSSet<PGPKey *> *keys;
 
 /**
+ Import keys. `keys` property is updated after successfull import.
+ 
+ @param path keys to load.
+ @return Set of loaded keys.
+ */
+- (NSSet<PGPKey *> *)importKeys:(NSSet<PGPKey *> *)keys;
+
+/**
  Import keys from the file. `keys` property is updated after successfull import.
 
  @param path Path to the file with the keys.
- @return Array of loaded keys.
+ @return Set of loaded keys.
  */
 - (NSSet<PGPKey *> *)importKeysFromFile:(NSString *)path;
 
@@ -29,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
  Import keys from the data. `keys` property is updated after successfull import.
 
  @param data Keys data.
- @return Array of loaded keys.
+ @return Set of loaded keys.
  */
 - (NSSet<PGPKey *> *)importKeysFromData:(NSData *)data;
 
@@ -76,6 +84,13 @@ NS_ASSUME_NONNULL_BEGIN
  @return Data or `nil` if can't export key.
  */
 - (nullable NSData *)exportKey:(PGPKey *)key armored:(BOOL)armored;
+
+/**
+ Delete keys
+ 
+ @param keys Keys to delete from keys object
+ */
+- (void)deleteKeys:(NSArray *)keys;
 
 /**
  Search for string based key identifier.
@@ -142,6 +157,9 @@ NS_ASSUME_NONNULL_BEGIN
  @return YES on success.
  */
 - (BOOL)verifyData:(NSData *)signedData withSignature:(NSData *)signatureData usingKey:(PGPKey *)key error:(NSError *__autoreleasing _Nullable *)error;
+
+- (NSArray *)keyIDsForDataToDecrypt:(NSData *)messageDataToDecrypt error:(NSError *__autoreleasing _Nullable *)error;
+- (PGPKeyID *)keyIDForSignatureData:(NSData *)signatureData;
 
 - (nullable NSData *)encryptData:(NSData *)dataToEncrypt usingKeys:(NSArray<PGPKey *> *)keys armored:(BOOL)armored error:(NSError *__autoreleasing _Nullable *)error;
 - (nullable NSData *)encryptData:(NSData *)dataToEncrypt usingKeys:(NSArray<PGPKey *> *)keys signWithKey:(nullable PGPKey *)signKey passphrase:(nullable NSString *)passphrase armored:(BOOL)armored error:(NSError *__autoreleasing _Nullable *)error;

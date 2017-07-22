@@ -26,6 +26,7 @@ PGP_EMPTY_INIT_UNAVAILABLE;
 
 @property (nonatomic, readonly) BOOL isSecret;
 @property (nonatomic, readonly) BOOL isPublic;
+@property (nonatomic, readonly) NSDate *expirationDate;
 
 @property (nonatomic, nullable, readonly) PGPSecretKeyPacket *signingSecretKey;
 
