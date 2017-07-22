@@ -234,7 +234,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Encrypt & Decrypt
 
-- (NSArray *)keyIdentifiersForDataToDecrypt:(NSData *)messageDataToDecrypt error:(NSError *__autoreleasing _Nullable *)error {
+- (NSArray *)keyIDsForDataToDecrypt:(NSData *)messageDataToDecrypt error:(NSError *__autoreleasing _Nullable *)error {
     @autoreleasepool {
         PGPAssertClass(messageDataToDecrypt, NSData);
         let binaryMessages = [self convertArmoredMessage2BinaryBlocksWhenNecessary:messageDataToDecrypt];
@@ -517,6 +517,19 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 #pragma mark - Sign & Verify
+
+- (PGPKeyID *)keyIDForSignatureData:(NSData *)signatureData {
+    if (!signatureData) {
+        return nil;
+    }
+    id packet = [PGPPacketFactory packetWithData:signatureData offset:0 nextPacketOffset:NULL];
+    if (![packet isKindOfClass:[PGPSignaturePacket class]]) {
+        return nil;
+    }
+    PGPSignaturePacket *signaturePacket = packet;
+    PGPKeyID *issuerKeyID = [signaturePacket issuerKeyID];
+    return issuerKeyID;
+}
 
 - (nullable NSData *)signData:(NSData *)dataToSign usingKey:(PGPKey *)key passphrase:(nullable NSString *)passphrase detached:(BOOL)detached error:(NSError *__autoreleasing *)error {
     // TODO: configurable defaults for prefered hash

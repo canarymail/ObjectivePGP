@@ -158,7 +158,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (BOOL)verifyData:(NSData *)signedData withSignature:(NSData *)signatureData usingKey:(PGPKey *)key error:(NSError *__autoreleasing _Nullable *)error;
 
-- (NSArray *)keyIdentifiersForDataToDecrypt:(NSData *)messageDataToDecrypt error:(NSError *__autoreleasing _Nullable *)error;
+- (NSArray *)keyIDsForDataToDecrypt:(NSData *)messageDataToDecrypt error:(NSError *__autoreleasing _Nullable *)error;
+- (PGPKeyID *)keyIDForSignatureData:(NSData *)signatureData;
 
 - (nullable NSData *)encryptData:(NSData *)dataToEncrypt usingKeys:(NSArray<PGPKey *> *)keys armored:(BOOL)armored error:(NSError *__autoreleasing _Nullable *)error;
 - (nullable NSData *)encryptData:(NSData *)dataToEncrypt usingKeys:(NSArray<PGPKey *> *)keys signWithKey:(nullable PGPKey *)signKey passphrase:(nullable NSString *)passphrase armored:(BOOL)armored error:(NSError *__autoreleasing _Nullable *)error;
