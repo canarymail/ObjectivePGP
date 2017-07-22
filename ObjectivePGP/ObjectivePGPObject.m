@@ -682,11 +682,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSSet<PGPKey *> *)importKeysFromData:(NSData *)data {
     let loadedKeys = [self keysFromData:data];
-    for (PGPKey *key in loadedKeys) {
+    return [self importKeys:loadedKeys];
+}
+
+- (NSSet<PGPKey *> *)importKeys:(NSSet<PGPKey *> *)keys {
+    for (PGPKey *key in keys) {
         self.keys = [self addOrUpdateCompoundKeyForKey:key.secretKey inContainer:self.keys];
         self.keys = [self addOrUpdateCompoundKeyForKey:key.publicKey inContainer:self.keys];
     }
-    return loadedKeys;
+    return keys;
 }
 
 - (BOOL)importKey:(NSString *)shortKeyStringIdentifier fromFile:(NSString *)path {

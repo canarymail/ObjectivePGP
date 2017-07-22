@@ -43,6 +43,10 @@ NS_ASSUME_NONNULL_BEGIN
     return self.publicKey.keyID ?: self.secretKey.keyID;
 }
 
+- (NSDate *)expirationDate {
+    return self.publicKey.expirationDate ?: self.secretKey.expirationDate;
+}
+
 - (nullable PGPSecretKeyPacket *)signingSecretKey {
     if (!self.secretKey) {
         PGPLogDebug(@"Need secret key to sign");
