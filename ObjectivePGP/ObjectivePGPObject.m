@@ -817,6 +817,10 @@ NS_ASSUME_NONNULL_BEGIN
         }
 
         offset += nextPacketOffset;
+        
+        if (nextPacketOffset == 0) {
+            NSAssert(nextPacketOffset > 0, @"Decryption data is corrupted.");
+        }
     }
 
     return accumulatedPackets;
