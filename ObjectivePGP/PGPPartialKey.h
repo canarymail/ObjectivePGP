@@ -58,6 +58,8 @@ typedef NS_ENUM(NSUInteger, PGPPartialKeyType) { PGPPartialKeyUnknown = 0, PGPPa
 - (nullable PGPPacket *)encryptionKeyPacket:(NSError *__autoreleasing *)error;
 - (nullable PGPSecretKeyPacket *)decryptionKeyPacketWithID:(PGPKeyID *)keyID error:(NSError *__autoreleasing *)error;
 
+- (BOOL)validatePassphrase:(NSString *)passphrase error:(NSError *__autoreleasing *)error;
+
 - (NSArray<PGPPacket *> *)allKeyPackets;
 - (PGPSymmetricAlgorithm)preferredSymmetricAlgorithm;
 + (PGPSymmetricAlgorithm)preferredSymmetricAlgorithmForKeys:(NSArray<PGPPartialKey *> *)keys;
