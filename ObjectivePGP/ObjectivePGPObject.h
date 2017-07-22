@@ -86,6 +86,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)exportKey:(PGPKey *)key armored:(BOOL)armored;
 
 /**
+ Delete keys
+ 
+ @param keys Keys to delete from keys object
+ */
+- (void)deleteKeys:(NSArray *)keys;
+
+/**
  Search for string based key identifier.
 
  @param keyIdentifier Key identifier. Short (8 characters, e.g: 4EF122E5) or long (16 characters, e.g: 71180E514EF122E5) identifier.
@@ -150,6 +157,8 @@ NS_ASSUME_NONNULL_BEGIN
  @return YES on success.
  */
 - (BOOL)verifyData:(NSData *)signedData withSignature:(NSData *)signatureData usingKey:(PGPKey *)key error:(NSError *__autoreleasing _Nullable *)error;
+
+- (NSArray *)keyIdentifiersForDataToDecrypt:(NSData *)messageDataToDecrypt error:(NSError *__autoreleasing _Nullable *)error;
 
 - (nullable NSData *)encryptData:(NSData *)dataToEncrypt usingKeys:(NSArray<PGPKey *> *)keys armored:(BOOL)armored error:(NSError *__autoreleasing _Nullable *)error;
 - (nullable NSData *)encryptData:(NSData *)dataToEncrypt usingKeys:(NSArray<PGPKey *> *)keys signWithKey:(nullable PGPKey *)signKey passphrase:(nullable NSString *)passphrase armored:(BOOL)armored error:(NSError *__autoreleasing _Nullable *)error;

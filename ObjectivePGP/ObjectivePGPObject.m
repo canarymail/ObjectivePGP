@@ -224,7 +224,45 @@ NS_ASSUME_NONNULL_BEGIN
     return nil;
 }
 
+#pragma mark - Delete
+
+- (void)deleteKeys:(NSArray *)keys {
+    NSMutableSet *allKeys = [NSMutableSet setWithSet:self.keys];
+    for (PGPKey *key in keys) { [allKeys removeObject:key]; };
+    self.keys = allKeys;
+}
+
 #pragma mark - Encrypt & Decrypt
+
+- (NSArray *)keyIdentifiersForDataToDecrypt:(NSData *)messageDataToDecrypt error:(NSError *__autoreleasing _Nullable *)error {
+    @autoreleasepool {
+        PGPAssertClass(messageDataToDecrypt, NSData);
+        let binaryMessages = [self convertArmoredMessage2BinaryBlocksWhenNecessary:messageDataToDecrypt];
+        
+        // decrypt first message only
+        let binaryMessageToDecrypt = binaryMessages.count > 0 ? binaryMessages.firstObject : nil;
+        if (!binaryMessageToDecrypt) {
+            if (error) {
+                *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid input data" }];
+            }
+            return nil;
+        }
+        
+        NSArray *packets = [self readPacketsFromData:binaryMessageToDecrypt];
+        
+        NSMutableArray *keyIDs = [[NSMutableArray alloc] init];
+
+        for (PGPPacket *packet in packets) {
+            if (packet.tag == PGPPublicKeyEncryptedSessionKeyPacketTag) {
+                PGPPublicKeyEncryptedSessionKeyPacket *pkESKPacket = (PGPPublicKeyEncryptedSessionKeyPacket *)packet;
+                [keyIDs addObject:pkESKPacket.keyID.longKeyString];
+            }
+        }
+        
+        return keyIDs;
+    }
+}
+
 
 - (nullable NSData *)decryptData:(NSData *)messageDataToDecrypt passphrase:(nullable NSString *)passphrase error:(NSError *__autoreleasing *)error {
     return [self decryptData:messageDataToDecrypt passphrase:passphrase verifyWithKey:nil signed:nil valid:nil integrityProtected:nil error:error];
@@ -277,8 +315,13 @@ NS_ASSUME_NONNULL_BEGIN
                 if (!decryptionSecretKeyPacket || (error && *error)) {
                     return nil;
                 }
+                
+                eskPacket = pkESKPacket;
+                break;
+            } else {
+                eskPacket = pkESKPacket;
             }
-            eskPacket = pkESKPacket;
+            
         }
     }
 
