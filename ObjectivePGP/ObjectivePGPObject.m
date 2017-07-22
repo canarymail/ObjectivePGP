@@ -374,6 +374,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     PGPLiteralPacket *literalPacket;
     PGPSignaturePacket *signaturePacket;
+    PGPKey *fallbackKey;
     NSData *plaintextData;
     for (PGPPacket *packet in packets) {
         switch (packet.tag) {
@@ -387,6 +388,7 @@ NS_ASSUME_NONNULL_BEGIN
                 break;
             case PGPSignaturePacketTag:
                 signaturePacket = PGPCast(packet, PGPSignaturePacket);
+                fallbackKey = [self findKeyForIdentifier:signaturePacket.issuerKeyID.longKeyString];
                 break;
             default:
                 if (error) {
@@ -400,6 +402,9 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _valid = NO;
     if (signaturePacket && key.publicKey) {
         _valid = [self verifyData:plaintextData withSignature:signaturePacket.packetData usingKey:key error:nil];
+    }
+    if (!_valid && fallbackKey.publicKey) {
+        _valid = [self verifyData:plaintextData withSignature:signaturePacket.packetData usingKey:fallbackKey error:nil];
     }
 
     if (isSigned) {
