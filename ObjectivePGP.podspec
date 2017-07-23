@@ -13,9 +13,6 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '8.0'
   s.osx.deployment_target = '10.9'
   
-  s.ios.vendored_frameworks = 'Frameworks/ios/ObjectivePGP.framework'
-  s.osx.vendored_frameworks = 'Frameworks/macosx/ObjectivePGP.framework'  
-  
   s.weak_frameworks = 'Security'
   s.requires_arc = true
 
