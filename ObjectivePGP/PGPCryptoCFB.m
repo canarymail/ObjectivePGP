@@ -106,7 +106,7 @@ NS_ASSUME_NONNULL_BEGIN
             DES_key_schedule *keys = calloc(3, sizeof(DES_key_schedule));
 
             for (NSUInteger n = 0; n < 3; ++n) {
-                DES_set_key((DES_cblock *)(void *)(ivData.bytes + n * 8), &keys[n]);
+                DES_set_key((DES_cblock *)(void *)(sessionKeyData.bytes + n * 8), &keys[n]);
             }
 
             int num = 0;
