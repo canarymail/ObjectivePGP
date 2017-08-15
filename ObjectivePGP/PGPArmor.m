@@ -99,115 +99,113 @@
 };
 
 + (NSData *)readArmoredData:(NSString *)armoredString error:(NSError *__autoreleasing *)error {
-    @autoreleasepool {
-        NSScanner *scanner = [[NSScanner alloc] initWithString:armoredString];
-        scanner.charactersToBeSkipped = nil;
-        
-        // check header line
-        NSString *headerLine = nil;
-        [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&headerLine];
-        if (![headerLine isEqualToString:@"-----BEGIN PGP MESSAGE-----"] && ![headerLine isEqualToString:@"-----BEGIN PGP PUBLIC KEY BLOCK-----"] && ![headerLine isEqualToString:@"-----BEGIN PGP PRIVATE KEY BLOCK-----"] && ![headerLine isEqualToString:@"-----BEGIN PGP SECRET KEY BLOCK-----"] && // PGP 2.x generates the header "BEGIN PGP SECRET KEY BLOCK" instead of "BEGIN PGP PRIVATE KEY BLOCK"
-            ![headerLine isEqualToString:@"-----BEGIN PGP SIGNATURE-----"] && ![headerLine hasPrefix:@"-----BEGIN PGP MESSAGE, PART"]) {
-            if (error) {
-                *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid header" }];
-            }
-            return nil;
+    NSScanner *scanner = [[NSScanner alloc] initWithString:armoredString];
+    scanner.charactersToBeSkipped = nil;
+    
+    // check header line
+    NSString *headerLine = nil;
+    [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&headerLine];
+    if (![headerLine isEqualToString:@"-----BEGIN PGP MESSAGE-----"] && ![headerLine isEqualToString:@"-----BEGIN PGP PUBLIC KEY BLOCK-----"] && ![headerLine isEqualToString:@"-----BEGIN PGP PRIVATE KEY BLOCK-----"] && ![headerLine isEqualToString:@"-----BEGIN PGP SECRET KEY BLOCK-----"] && // PGP 2.x generates the header "BEGIN PGP SECRET KEY BLOCK" instead of "BEGIN PGP PRIVATE KEY BLOCK"
+        ![headerLine isEqualToString:@"-----BEGIN PGP SIGNATURE-----"] && ![headerLine hasPrefix:@"-----BEGIN PGP MESSAGE, PART"]) {
+        if (error) {
+            *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid header" }];
         }
-        
-        // consume newline
-        [scanner scanString:@"\r" intoString:nil];
-        [scanner scanString:@"\n" intoString:nil];
-        
-        NSString *line = nil;
-        
-        if (![scanner scanCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:nil]) {
-            // Scan headers (Optional)
-            [scanner scanUpToCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:nil];
-            
-            while ([scanner scanCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line]) {
-                // consume newline
-                [scanner scanString:@"\r" intoString:nil];
-                [scanner scanString:@"\n" intoString:nil];
-            }
-        }
-        
-        // skip blank line
-        [scanner scanCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:nil];
-        
-        // read base64 data
-        BOOL base64Section = YES;
-        NSMutableString *base64String = [NSMutableString string];
-        while (base64Section && [scanner scanCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line]) {
-            // consume newline
-            [scanner scanString:@"\r" intoString:nil];
-            [scanner scanString:@"\n" intoString:nil];
-            
-            if ([line hasPrefix:@"="]) {
-                scanner.scanLocation = scanner.scanLocation - (line.length + 2);
-                base64Section = NO;
-            } else {
-                [base64String appendFormat:@"%@\n", line];
-            }
-        }
-        
-        // read checksum
-        NSString *checksumString = nil;
-        [scanner scanUpToCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line];
-        // consume newline
-        [scanner scanString:@"\r" intoString:nil];
-        [scanner scanString:@"\n" intoString:nil];
-        
-        if ([scanner scanString:@"=" intoString:nil]) {
-            [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&checksumString];
-            // consume newline
-            [scanner scanString:@"\r" intoString:nil];
-            [scanner scanString:@"\n" intoString:nil];
-        }
-        
-        if (!checksumString) {
-            if (error) {
-                *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Missing checksum" }];
-            }
-            return nil;
-        }
-        
-        // read footer
-        BOOL footerMatchHeader = NO;
-        [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&line];
-        // consume newline
-        [scanner scanString:@"\r" intoString:nil];
-        [scanner scanString:@"\n" intoString:nil];
-        
-        if ([line hasSuffix:[headerLine substringFromIndex:12]]) {
-            footerMatchHeader = YES;
-        }
-        
-        if (!footerMatchHeader) {
-            if (error) {
-                *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Footer don't match to header" }];
-            }
-            return nil;
-        }
-        
-        // binary data from base64 part
-        NSData *binaryData = [[NSData alloc] initWithBase64EncodedString:base64String options:NSDataBase64DecodingIgnoreUnknownCharacters];
-        
-        // validate checksum
-        NSData *readChecksumData = [[NSData alloc] initWithBase64EncodedString:checksumString options:NSDataBase64DecodingIgnoreUnknownCharacters];
-        
-        UInt32 calculatedCRC24 = [binaryData pgp_CRC24];
-        calculatedCRC24 = CFSwapInt32HostToBig(calculatedCRC24);
-        calculatedCRC24 = calculatedCRC24 >> 8;
-        NSData *calculatedCRC24Data = [NSData dataWithBytes:&calculatedCRC24 length:3];
-        if (![calculatedCRC24Data isEqualToData:readChecksumData]) {
-            if (error) {
-                *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Checksum mismatch" }];
-            }
-            return nil;
-        }
-        
-        return binaryData;
+        return nil;
     }
+    
+    // consume newline
+    [scanner scanString:@"\r" intoString:nil];
+    [scanner scanString:@"\n" intoString:nil];
+    
+    NSString *line = nil;
+    
+    if (![scanner scanCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:nil]) {
+        // Scan headers (Optional)
+        [scanner scanUpToCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:nil];
+        
+        while ([scanner scanCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line]) {
+            // consume newline
+            [scanner scanString:@"\r" intoString:nil];
+            [scanner scanString:@"\n" intoString:nil];
+        }
+    }
+    
+    // skip blank line
+    [scanner scanCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:nil];
+    
+    // read base64 data
+    BOOL base64Section = YES;
+    NSMutableString *base64String = [NSMutableString string];
+    while (base64Section && [scanner scanCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line]) {
+        // consume newline
+        [scanner scanString:@"\r" intoString:nil];
+        [scanner scanString:@"\n" intoString:nil];
+        
+        if ([line hasPrefix:@"="]) {
+            scanner.scanLocation = scanner.scanLocation - (line.length + 2);
+            base64Section = NO;
+        } else {
+            [base64String appendFormat:@"%@\n", line];
+        }
+    }
+    
+    // read checksum
+    NSString *checksumString = nil;
+    [scanner scanUpToCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line];
+    // consume newline
+    [scanner scanString:@"\r" intoString:nil];
+    [scanner scanString:@"\n" intoString:nil];
+    
+    if ([scanner scanString:@"=" intoString:nil]) {
+        [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&checksumString];
+        // consume newline
+        [scanner scanString:@"\r" intoString:nil];
+        [scanner scanString:@"\n" intoString:nil];
+    }
+    
+    if (!checksumString) {
+        if (error) {
+            *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Missing checksum" }];
+        }
+        return nil;
+    }
+    
+    // read footer
+    BOOL footerMatchHeader = NO;
+    [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&line];
+    // consume newline
+    [scanner scanString:@"\r" intoString:nil];
+    [scanner scanString:@"\n" intoString:nil];
+    
+    if ([line hasSuffix:[headerLine substringFromIndex:12]]) {
+        footerMatchHeader = YES;
+    }
+    
+    if (!footerMatchHeader) {
+        if (error) {
+            *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Footer don't match to header" }];
+        }
+        return nil;
+    }
+    
+    // binary data from base64 part
+    NSData *binaryData = [[NSData alloc] initWithBase64EncodedString:base64String options:NSDataBase64DecodingIgnoreUnknownCharacters];
+    
+    // validate checksum
+    NSData *readChecksumData = [[NSData alloc] initWithBase64EncodedString:checksumString options:NSDataBase64DecodingIgnoreUnknownCharacters];
+    
+    UInt32 calculatedCRC24 = [binaryData pgp_CRC24];
+    calculatedCRC24 = CFSwapInt32HostToBig(calculatedCRC24);
+    calculatedCRC24 = calculatedCRC24 >> 8;
+    NSData *calculatedCRC24Data = [NSData dataWithBytes:&calculatedCRC24 length:3];
+    if (![calculatedCRC24Data isEqualToData:readChecksumData]) {
+        if (error) {
+            *error = [NSError errorWithDomain:PGPErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Checksum mismatch" }];
+        }
+        return nil;
+    }
+    
+    return binaryData;
 }
 
 @end
