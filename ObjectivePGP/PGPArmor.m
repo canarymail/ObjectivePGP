@@ -50,7 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 + (NSString *)armored:(NSData *)data as:(PGPArmorType)type part:(NSUInteger)part of:(NSUInteger)ofParts {
-    NSMutableDictionary *headers = [@{ @"Version": @"ObjectivePGP", @"Comment": @"https://www.objectivepgp.com", @"Charset": @"UTF-8" } mutableCopy];
+    NSMutableDictionary *headers = [@{ @"Version": @"Canary", @"Comment": @"https://www.canarymail.io", @"Charset": @"UTF-8" } mutableCopy];
 
     NSMutableString *headerString = [NSMutableString stringWithString:@"-----"];
     NSMutableString *footerString = [NSMutableString stringWithString:@"-----"];
