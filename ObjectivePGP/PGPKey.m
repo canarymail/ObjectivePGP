@@ -57,6 +57,40 @@ NS_ASSUME_NONNULL_BEGIN
     return self.publicKey.keyID ?: self.secretKey.keyID;
 }
 
+- (NSSet *)keyIDs {
+    NSMutableSet *keyIDs = [[NSMutableSet alloc] init];
+    
+    if (self.publicKey) {
+        NSString *keyID = self.publicKey.keyID.longIdentifier;
+        if (keyID) {
+            [keyIDs addObject:keyID];
+        }
+        
+        for (PGPPartialSubKey *subkey in self.publicKey.subKeys) {
+            let subIdentifier = subkey.keyID.longIdentifier;
+            if (subIdentifier) {
+                [keyIDs addObject:subIdentifier];
+            }
+        }
+    }
+    
+    if (self.secretKey) {
+        NSString *keyID = self.secretKey.keyID.longIdentifier;
+        if (keyID) {
+            [keyIDs addObject:keyID];
+        }
+        
+        for (PGPPartialSubKey *subkey in self.secretKey.subKeys) {
+            let subIdentifier = subkey.keyID.longIdentifier;
+            if (subIdentifier) {
+                [keyIDs addObject:subIdentifier];
+            }
+        }
+    }
+    
+    return keyIDs;
+}
+
 - (nullable PGPSecretKeyPacket *)signingSecretKey {
     if (!self.secretKey) {
         PGPLogDebug(@"Need secret key to sign");

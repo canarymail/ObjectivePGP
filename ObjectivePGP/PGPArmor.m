@@ -36,6 +36,15 @@ NS_ASSUME_NONNULL_BEGIN
     return YES;
 }
 
++ (BOOL)containsArmoredData:(NSData *)data {
+    PGPAssertClass(data, NSData);
+    NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    if (str && [str containsString:@"-----BEGIN PGP"]) {
+        return YES;
+    }
+    return NO;
+}
+
 + (NSString *)armored:(NSData *)data as:(PGPArmorType)type {
     return [[self class] armored:data as:type part:NSUIntegerMax of:NSUIntegerMax];
 }
@@ -233,7 +242,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable NSArray<NSData *> *)convertArmoredMessage2BinaryBlocksWhenNecessary:(NSData *)binOrArmorData error:(NSError * __autoreleasing _Nullable *)error {
     let binRingData = binOrArmorData;
     // detect if armored, check for string -----BEGIN PGP
-    if ([PGPArmor isArmoredData:binRingData]) {
+    if ([PGPArmor containsArmoredData:binRingData]) {
         var armoredString = [[NSMutableString alloc] initWithData:binRingData encoding:NSUTF8StringEncoding];
         [armoredString replaceOccurrencesOfString:@"\r\n" withString:@"\n" options:0 range:NSMakeRange(0, armoredString.length)];
         [armoredString replaceOccurrencesOfString:@"\n" withString:@"\r\n" options:0 range:NSMakeRange(0, armoredString.length)];
