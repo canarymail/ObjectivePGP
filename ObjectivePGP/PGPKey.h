@@ -21,6 +21,7 @@ PGP_EMPTY_INIT_UNAVAILABLE;
 
 /// Key ID
 @property (nonatomic, readonly) PGPKeyID *keyID;
+@property (nonatomic, readonly) NSSet *keyIDs;
 @property (nonatomic, nullable, copy, readonly) PGPPartialKey *secretKey;
 @property (nonatomic, nullable, copy, readonly) PGPPartialKey *publicKey;
 @property (nonatomic, nullable, readonly) NSDate *expirationDate;
