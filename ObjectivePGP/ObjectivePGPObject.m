@@ -678,6 +678,19 @@ NS_ASSUME_NONNULL_BEGIN
     return keys;
 }
 
++ (PGPKeyID *)keyIDForSignatureData:(NSData *)signatureData {
+    if (!signatureData) {
+        return nil;
+    }
+    id packet = [PGPPacketFactory packetWithData:signatureData offset:0 consumedBytes:NULL];
+    if (![packet isKindOfClass:[PGPSignaturePacket class]]) {
+        return nil;
+    }
+    PGPSignaturePacket *signaturePacket = packet;
+    PGPKeyID *issuerKeyID = [signaturePacket issuerKeyID];
+    return issuerKeyID;
+}
+
 + (nullable NSArray<PGPKeyID *> *)recipientsKeyIDForMessage:(NSData *)data error:(NSError * __autoreleasing _Nullable *)error {
     PGPAssertClass(data, NSData);
 
