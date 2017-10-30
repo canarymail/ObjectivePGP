@@ -117,6 +117,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable NSArray<PGPKeyID *> *)recipientsKeyIDForMessage:(NSData *)data error:(NSError * __autoreleasing _Nullable *)error;
 
++ (PGPKeyID *)keyIDForSignatureData:(NSData *)signatureData;
+
 @end
 
 NS_ASSUME_NONNULL_END

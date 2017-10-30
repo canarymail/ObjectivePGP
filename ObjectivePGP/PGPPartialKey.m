@@ -357,6 +357,12 @@ NS_ASSUME_NONNULL_BEGIN
     return encryptedPartialKey;
 }
 
+
+
+- (BOOL)validatePassphrase:(NSString *)passphrase error:(NSError *__autoreleasing *)error {
+    return [self decryptedWithPassphrase:passphrase error:error] != nil;
+}
+
 #pragma mark - isEqual
 
 - (BOOL)isEqual:(id)other {

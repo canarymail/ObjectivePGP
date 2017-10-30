@@ -67,6 +67,8 @@ PGP_EMPTY_INIT_UNAVAILABLE;
 - (PGPSymmetricAlgorithm)preferredSymmetricAlgorithm;
 + (PGPSymmetricAlgorithm)preferredSymmetricAlgorithmForKeys:(NSArray<PGPPartialKey *> *)keys;
 
+- (BOOL)validatePassphrase:(NSString *)passphrase error:(NSError *__autoreleasing *)error;
+
 -(instancetype)copyWithZone:(nullable NSZone *)zone NS_REQUIRES_SUPER;
 
 @end
