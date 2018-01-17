@@ -63,6 +63,27 @@ NS_SWIFT_NAME(Keyring) @interface PGPKeyring : NSObject <PGPExportable>
 - (nullable NSData *)exportKey:(PGPKey *)key armored:(BOOL)armored NS_SWIFT_NAME(export(key:armored:));
 
 /**
+ Export, specified, keys of given type (public and/or secret) to the file at given path.
+ 
+ @param keys Keys to export
+ @param path Full path to the destination file.
+ @param error Error.
+ @return YES on success.
+ */
+- (BOOL)exportKeys:(NSArray<PGPKey *> *)keys toFile:(NSString *)path error:(NSError * __autoreleasing *)error
+NS_SWIFT_NAME(export(keys:to:));
+
+/**
+ Export, specified, keys of given type (public and/or secret) to the file at given path.
+ @param keys Partial keys to export
+ @param path Full path to the destination file.
+ @param error Error.
+ @return YES on success.
+ */
+- (BOOL)exportPartialKeys:(NSArray<PGPPartialKey *> *)keys toFile:(NSString *)path error:(NSError * __autoreleasing *)error
+NS_SWIFT_NAME(export(partialKeys:to:));
+
+/**
  Search imported keys for the key identifier.
 
  @param identifier Key identifier. Short (8 characters, e.g: "4EF122E5") or long (16 characters, e.g: "71180E514EF122E5") identifier.
