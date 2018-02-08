@@ -680,11 +680,21 @@ NS_ASSUME_NONNULL_BEGIN
         return nil;
     }
 
+    NSMutableArray *exceptions = [[NSMutableArray alloc] init];
     for (NSData *data in binRingData) {
-        let readPartialKeys = [self readPartialKeysFromData:data];
-        for (PGPPartialKey *key in readPartialKeys) {
-            keys = [PGPKeyring addOrUpdatePartialKey:key inContainer:keys];
+        @try {
+            let readPartialKeys = [self readPartialKeysFromData:data];
+            for (PGPPartialKey *key in readPartialKeys) {
+                keys = [PGPKeyring addOrUpdatePartialKey:key inContainer:keys];
+            }
+        } @catch (NSException *e) {
+            [exceptions addObject:e];
         }
+    }
+    
+    if (exceptions.count > 0 && error) {
+        *error = [NSError errorWithDomain:PGPErrorDomain code:PGPErrorInvalidMessage
+                                 userInfo:@{NSLocalizedDescriptionKey: @"Can't read some keys. Invalid input.", @"exceptions" : exceptions }];
     }
 
     return keys;
