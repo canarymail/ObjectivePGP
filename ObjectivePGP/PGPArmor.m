@@ -45,6 +45,15 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
 }
 
++ (BOOL)containsSignedMessageData:(NSData *)data {
+    PGPAssertClass(data, NSData);
+    NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    if (str && [str containsString:@"-----BEGIN PGP"]) {
+        return YES;
+    }
+    return NO;
+}
+
 + (NSString *)armored:(NSData *)data as:(PGPArmorType)type {
     return [[self class] armored:data as:type part:NSUIntegerMax of:NSUIntegerMax];
 }
