@@ -764,7 +764,12 @@ NS_ASSUME_NONNULL_BEGIN
 
     while (position < messageData.length) {
         @autoreleasepool {
-            let packet = [PGPPacketFactory packetWithData:messageData offset:position consumedBytes:&consumedBytes];
+            PGPPacket *packet = nil;
+            @try {
+                packet = [PGPPacketFactory packetWithData:messageData offset:position consumedBytes:&consumedBytes];
+            } @catch (NSException *e) {
+                packet = nil;
+            }
             if (!packet) {
                 position += (consumedBytes > 0) ? consumedBytes : 1;
                 continue;
