@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)containsSignedMessageData:(NSData *)data {
     PGPAssertClass(data, NSData);
     NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    if (str && [str containsString:@"-----BEGIN PGP"]) {
+    if (str && [str containsString:@"-----BEGIN PGP SIGNED"]) {
         return YES;
     }
     return NO;
