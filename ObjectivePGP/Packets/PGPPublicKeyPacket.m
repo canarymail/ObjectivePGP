@@ -27,6 +27,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface PGPPublicKeyPacket ()
+
+@property (atomic, strong) PGPFingerprint *cachedFingerprint;
+
+@end
+
 @implementation PGPPublicKeyPacket
 
 - (instancetype)init {
@@ -79,7 +85,10 @@ NS_ASSUME_NONNULL_BEGIN
  *  @return Fingerprint data
  */
 - (PGPFingerprint *)fingerprint {
-    return [[PGPFingerprint alloc] initWithData:[self exportKeyPacketOldStyle]];
+    if (!self.cachedFingerprint) {
+        self.cachedFingerprint = [[PGPFingerprint alloc] initWithData:[self exportKeyPacketOldStyle]];
+    }
+    return self.cachedFingerprint;
 }
 
 #pragma mark - Parse data
