@@ -54,6 +54,27 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
 }
 
++ (PGPArmorType)armorTypeForData:(NSData *)data {
+    PGPAssertClass(data, NSData);
+    NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    if (str) {
+        if ([str containsString:@"-----BEGIN PGP MESSAGE"]) {
+            return PGPArmorMessage;
+        } else if ([str containsString:@"-----BEGIN PGP SIGNATURE"]) {
+            return PGPArmorSignature;
+        } else if ([str containsString:@"-----BEGIN PGP SIGNED"]) {
+            return PGPArmorCleartextSignedMessage;
+        } else if ([str containsString:@"-----BEGIN PGP PUBLIC KEY"]) {
+            return PGPArmorPublicKey;
+        } else if ([str containsString:@"-----BEGIN PGP PRIVATE KEY"]) {
+            return PGPArmorSecretKey;
+        } else if ([str containsString:@"-----BEGIN PGP"]) {
+            return PGPArmorMessage;
+        }
+    }
+    return 0;
+}
+
 + (NSString *)armored:(NSData *)data as:(PGPArmorType)type {
     return [[self class] armored:data as:type part:NSUIntegerMax of:NSUIntegerMax];
 }
