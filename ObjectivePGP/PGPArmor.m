@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (BOOL)isArmoredData:(NSData *)data {
     PGPAssertClass(data, NSData);
-
+    
     // detect if armored, check for string -----BEGIN PGP
     NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     if (!str) {
@@ -81,7 +81,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSString *)armored:(NSData *)data as:(PGPArmorType)type part:(NSUInteger)part of:(NSUInteger)ofParts {
     NSMutableDictionary *headers = [@{ @"Version": @"Canary", @"Comment": @"https://www.canarymail.io", @"Charset": @"UTF-8" } mutableCopy];
-
+    
     NSMutableString *headerString = [NSMutableString stringWithString:@"-----"];
     NSMutableString *footerString = [NSMutableString stringWithString:@"-----"];
     switch (type) {
@@ -113,50 +113,76 @@ NS_ASSUME_NONNULL_BEGIN
             NSAssert(true, @"Message type not supported");
             break;
     }
-
+    
     [headerString appendString:@"-----\n"];
     [footerString appendString:@"-----\n"];
-
+    
     NSMutableString *armoredMessage = [NSMutableString string];
     // - An Armor Header Line, appropriate for the type of data
     [armoredMessage appendString:headerString];
-
+    
     // - Armor Headers
     for (NSString *key in headers.allKeys) {
         [armoredMessage appendFormat:@"%@: %@\n", key, headers[key]];
     }
-
+    
     // - A blank (zero-length, or containing only whitespace) line
     [armoredMessage appendString:@"\n"];
-
+    
     // - The ASCII-Armored data
     NSString *radix64 = [data base64EncodedStringWithOptions:NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed];
     [armoredMessage appendString:radix64];
     [armoredMessage appendString:@"\n"];
-
+    
     // - An Armor Checksum
     UInt32 checksum = [data pgp_CRC24];
     UInt8 c[3]; // 24 bit
     c[0] = (UInt8)(checksum >> 16);
     c[1] = (UInt8)(checksum >> 8);
     c[2] = (UInt8)checksum;
-
+    
     NSData *checksumData = [NSData dataWithBytes:&c length:sizeof(c)];
     [armoredMessage appendString:@"="];
     [armoredMessage appendString:[checksumData base64EncodedStringWithOptions:NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed]];
     [armoredMessage appendString:@"\n"];
-
+    
     // - The Armor Tail, which depends on the Armor Header Line
     [armoredMessage appendString:footerString];
     return armoredMessage;
 };
 
++ (nullable NSString *)readChecksum:(NSMutableString *)base64String {
+    NSString *checksumString = nil;
+    NSRange range; BOOL hasChecksum = YES;
+    
+    range = [base64String rangeOfString:@"\n" options:NSBackwardsSearch range:NSMakeRange(0, base64String.length)];
+    hasChecksum = range.location != NSNotFound;
+    
+    if (hasChecksum) {
+        range = [base64String rangeOfString:@"\n" options:NSBackwardsSearch range:NSMakeRange(0, range.location)];
+        hasChecksum = range.location != NSNotFound;
+    }
+    if (hasChecksum) {
+        NSString *lastLine = [base64String substringWithRange:NSMakeRange(range.location, base64String.length - range.location)];
+        lastLine = [lastLine stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        hasChecksum = [lastLine hasPrefix:@"="];
+        if (hasChecksum) {
+            checksumString = [lastLine substringFromIndex:1];
+            [base64String deleteCharactersInRange:NSMakeRange(range.location, base64String.length - range.location)];
+        }
+    }
+    return checksumString;
+}
+
 + (nullable NSData *)readArmored:(NSString *)string error:(NSError * __autoreleasing _Nullable *)error {
     PGPAssertClass(string, NSString);
-
+    
     let scanner = [[NSScanner alloc] initWithString:string];
     scanner.charactersToBeSkipped = nil;
-
+    
+    NSCharacterSet *newlineSet = [NSCharacterSet newlineCharacterSet];
+    NSCharacterSet *invertedSet = [[NSCharacterSet newlineCharacterSet] invertedSet];
+    
     // check header line
     NSString *headerLine = nil;
     [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&headerLine];
@@ -172,86 +198,63 @@ NS_ASSUME_NONNULL_BEGIN
         }
         return nil;
     }
-
+    
     // consume newline
     [scanner scanString:@"\r" intoString:nil];
     [scanner scanString:@"\n" intoString:nil];
-
+    
     NSString *line = nil;
-
-    if (![scanner scanCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:nil]) {
+    
+    if (![scanner scanCharactersFromSet:newlineSet intoString:nil]) {
         // Scan headers (Optional)
-        [scanner scanUpToCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:nil];
-
-        while ([scanner scanCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line]) {
+        [scanner scanUpToCharactersFromSet:invertedSet intoString:nil];
+        while ([scanner scanCharactersFromSet:invertedSet intoString:&line]) {
             // consume newline
             [scanner scanString:@"\r" intoString:nil];
             [scanner scanString:@"\n" intoString:nil];
         }
     }
-
+    
     // skip blank line
-    [scanner scanCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:nil];
-
-    // read base64 data
-    // The encoded stream must be represented in lines of no more than 76 characters each.
-    BOOL base64Section = YES;
-    let base64String = [NSMutableString string];
-    while (base64Section && [scanner scanCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line]) {
-        // consume newline
-        @autoreleasepool {
-            [scanner scanString:@"\r" intoString:nil];
-            [scanner scanString:@"\n" intoString:nil];
-            
-            if ([line hasPrefix:@"="] || [line hasPrefix:@"-----"]) {
-                scanner.scanLocation = scanner.scanLocation - (line.length + 2);
-                base64Section = NO;
-            } else {
-                [base64String appendString:line];
-            }
-        }
-    }
-
-    // read checksum
+    [scanner scanCharactersFromSet:newlineSet intoString:nil];
+    // consume till footer
+    [scanner scanUpToString:@"-----" intoString:&line];
+    
+    // parse checksum + base64
+    let base64String = [NSMutableString stringWithString:line];
     NSString *checksumString = nil;
-    [scanner scanUpToCharactersFromSet:[[NSCharacterSet newlineCharacterSet] invertedSet] intoString:&line];
-    // consume newline
-    [scanner scanString:@"\r" intoString:nil];
-    [scanner scanString:@"\n" intoString:nil];
-
-    if ([scanner scanString:@"=" intoString:nil]) {
-        [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&checksumString];
-        // consume newline
-        [scanner scanString:@"\r" intoString:nil];
-        [scanner scanString:@"\n" intoString:nil];
+    @autoreleasepool {
+        [base64String replaceOccurrencesOfString:@"\r\n" withString:@"\n" options:0 range:NSMakeRange(0, base64String.length)];
+        checksumString = [self readChecksum:base64String];
+        [base64String replaceOccurrencesOfString:@"\n" withString:@"" options:0 range:NSMakeRange(0, base64String.length)];
     }
-
+    
     // read footer
     BOOL footerMatchHeader = NO;
-    [scanner scanUpToCharactersFromSet:[NSCharacterSet newlineCharacterSet] intoString:&line];
+    [scanner scanUpToCharactersFromSet:newlineSet intoString:&line];
     // consume newline
     [scanner scanString:@"\r" intoString:nil];
     [scanner scanString:@"\n" intoString:nil];
-
+    
     if ([line isEqualToString:[NSString stringWithFormat:@"-----END %@",[headerLine substringFromIndex:11]]]) {
         footerMatchHeader = YES;
     }
-
+    
     if (!footerMatchHeader) {
         if (error) {
             *error = [NSError errorWithDomain:PGPErrorDomain code:PGPErrorInvalidMessage userInfo:@{ NSLocalizedDescriptionKey: @"Footer don't match to header" }];
         }
         return nil;
     }
-
+    
     // binary data from base64 part
     let binaryData = [[NSData alloc] initWithBase64EncodedString:base64String options:0];
-
+    
     // The checksum with its leading equal sign MAY appear on the first line after the base64 encoded data.
     // validate checksum
     if (checksumString) {
         let readChecksumData = [[NSData alloc] initWithBase64EncodedString:checksumString options:0];
-
+        
         UInt32 calculatedCRC24 = [binaryData pgp_CRC24];
         calculatedCRC24 = CFSwapInt32HostToBig(calculatedCRC24);
         calculatedCRC24 = calculatedCRC24 >> 8;
@@ -273,7 +276,7 @@ NS_ASSUME_NONNULL_BEGIN
         var armoredString = [[NSMutableString alloc] initWithData:binRingData encoding:NSUTF8StringEncoding];
         [armoredString replaceOccurrencesOfString:@"\r\n" withString:@"\n" options:0 range:NSMakeRange(0, armoredString.length)];
         [armoredString replaceOccurrencesOfString:@"\n" withString:@"\r\n" options:0 range:NSMakeRange(0, armoredString.length)];
-
+        
         let extractedBlocks = [[NSMutableArray<NSString *> alloc] init];
         let regex = [[NSRegularExpression alloc] initWithPattern:@"-----(BEGIN|END) (PGP)[A-Z ]*-----" options:NSRegularExpressionDotMatchesLineSeparators error:nil];
         __block NSInteger offset = 0;
@@ -288,7 +291,7 @@ NS_ASSUME_NONNULL_BEGIN
                 }
             }
         }];
-
+        
         let extractedData = [[NSMutableArray<NSData *> alloc] init];
         for (NSString *extractedString in extractedBlocks) {
             @autoreleasepool {
