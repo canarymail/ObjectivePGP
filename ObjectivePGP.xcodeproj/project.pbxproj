@@ -731,6 +731,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = 756299AC1914DE1A00C5AD3B;
@@ -889,8 +890,17 @@
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				OTHER_CFLAGS = (
+					"$(PGP_CFLAGS_COMMON)",
+					"-target",
+					"x86_64-apple-ios-macabi",
+					"-miphoneos-version-min=13.0",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.krzyzanowskim.$(PRODUCT_NAME)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -907,8 +917,17 @@
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				OTHER_CFLAGS = (
+					"$(PGP_CFLAGS_COMMON)",
+					"-target",
+					"x86_64-apple-ios-macabi",
+					"-miphoneos-version-min=13.0",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.krzyzanowskim.$(PRODUCT_NAME)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7 x86_64";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
