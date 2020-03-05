@@ -254,6 +254,9 @@ NS_ASSUME_NONNULL_BEGIN
     // validate checksum
     if (checksumString) {
         let readChecksumData = [[NSData alloc] initWithBase64EncodedString:checksumString options:0];
+        if (readChecksumData.length == 0) {
+            return binaryData;
+        }
         
         UInt32 calculatedCRC24 = [binaryData pgp_CRC24];
         calculatedCRC24 = CFSwapInt32HostToBig(calculatedCRC24);
